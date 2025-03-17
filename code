@@ -1,0 +1,118 @@
+#include <iostream>
+#include <cstring>  // For strcpy and strcmp
+
+using namespace std;
+
+#define MAX_CARS 10
+#define LICENSE_PLATE_SIZE 20
+
+class Car {
+public:
+    char license_plate[LICENSE_PLATE_SIZE];
+    int move_count;
+
+    Car() : move_count(0) {
+        license_plate[0] = '\0'; // Initialize empty string
+    }
+
+    void setLicensePlate(const char* plate) {
+        strcpy(license_plate, plate);
+    }
+};
+
+class ParkingGarage {
+private:
+    Car cars[MAX_CARS];
+    int top;
+
+public:
+    ParkingGarage() : top(-1) {}
+
+    bool isFull() const {
+        return top == MAX_CARS - 1;
+    }
+
+    bool isEmpty() const {
+        return top == -1;
+    }
+
+    void arrive(const char* license_plate) {
+        if (isFull()) {
+            cout << "Car " << license_plate << " arrives but the garage is full. It leaves.\n";
+            return;
+        }
+        top++;
+        cars[top].setLicensePlate(license_plate);
+        cars[top].move_count = 0;
+        cout << "Car " << license_plate << " arrives and is parked.\n";
+    }
+
+    void depart(const char* license_plate) {
+        if (isEmpty()) {
+            cout << "Car " << license_plate << " cannot depart because the garage is empty.\n";
+            return;
+        }
+
+        ParkingGarage tempStack;
+        bool found = false;
+
+        while (!isEmpty()) {
+            Car topCar = cars[top--];
+
+            if (strcmp(topCar.license_plate, license_plate) == 0) {
+                cout << "Car " << license_plate << " departs. It was moved out " << topCar.move_count << " times.\n";
+                found = true;
+                break;
+            }
+
+            topCar.move_count++;
+            tempStack.cars[++tempStack.top] = topCar;
+        }
+
+        while (!tempStack.isEmpty()) {
+            cars[++top] = tempStack.cars[tempStack.top--];
+        }
+
+        if (!found) {
+            cout << "Car " << license_plate << " was not found in the garage.\n";
+        }
+    }
+
+    static void displayInstructions() {
+        cout << "\nWelcome to the Bashemin Parking Garage System!\n"
+             << "Commands:\n"
+             << "  A <license_plate> - Arrive a car\n"
+             << "  D <license_plate> - Depart a car\n"
+             << "  X - Exit the program\n\n";
+    }
+};
+
+int main() {
+    ParkingGarage garage;
+    garage.displayInstructions();
+
+    char command;
+    char license_plate[LICENSE_PLATE_SIZE];
+
+    while (true) {
+        cout << "Enter command: ";
+        cin >> command;
+
+        if (command == 'X' || command == 'x') {
+            cout << "Exiting program. Thank you!\n";
+            break;
+        }
+
+        cin >> license_plate;
+
+        if (command == 'A') {
+            garage.arrive(license_plate);
+        } else if (command == 'D') {
+            garage.depart(license_plate);
+        } else {
+            cout << "Invalid command. Please enter A, D, or X.\n";
+        }
+    }
+
+    return 0;
+}

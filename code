@@ -85,3 +85,185 @@ int main() {
 
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#include <iostream>
+
+using namespace std;
+
+#define MAX_USERS 100
+#define MAX_TRANSACTIONS 100
+
+// Class representing a User and their transactions
+class User {
+public:
+    int userID;
+    int startTime;
+    int numTransactions;
+    int transactions[MAX_TRANSACTIONS];
+
+    // Constructor
+    User() {
+        userID = 0;
+        startTime = 0;
+        numTransactions = 0;
+    }
+
+    // Method to set user details
+    void setUser(int id, int start) {
+        userID = id;
+        startTime = start;
+        numTransactions = 0;
+    }
+
+    // Method to add a transaction
+    void addTransaction(int duration) {
+        if (numTransactions < MAX_TRANSACTIONS) {
+            transactions[numTransactions++] = duration;
+        } else {
+            cout << "Maximum transactions reached for user " << userID << endl;
+        }
+    }
+};
+
+// Class representing a custom Queue for Users
+class Queue {
+private:
+    User users[MAX_USERS];
+    int front, rear;
+
+public:
+    // Constructor to initialize queue
+    Queue() {
+        front = 0;
+        rear = 0;
+    }
+
+    // Check if queue is empty
+    bool isEmpty() {
+        return front == rear;
+    }
+
+    // Check if queue is full
+    bool isFull() {
+        return rear == MAX_USERS;
+    }
+
+    // Enqueue (Add user to queue)
+    void enqueue(User user) {
+        if (!isFull()) {
+            users[rear++] = user;
+        } else {
+            cout << "Queue is full! Cannot add more users." << endl;
+        }
+    }
+
+    // Dequeue (Remove user from queue)
+    User dequeue() {
+        if (!isEmpty()) {
+            return users[front++];
+        } else {
+            cout << "Queue is empty!" << endl;
+            exit(1);
+        }
+    }
+};
+
+// Class to simulate transaction processing
+class TransactionProcessor {
+private:
+    Queue q;
+
+public:
+    // Add a user to the queue
+    void addUser(User user) {
+        q.enqueue(user);
+    }
+
+    // Process the transactions
+    void simulateProcessing() {
+        int currentTime = 0;
+        int totalWaitingTime = 0;
+        int totalTransactions = 0;
+
+        cout << "\nProcessing transactions...\n\n";
+
+        while (!q.isEmpty()) {
+            User user = q.dequeue();
+            int transactionStartTime = (currentTime < user.startTime) ? user.startTime : currentTime;
+
+            for (int j = 0; j < user.numTransactions; j++) {
+                cout << "User " << user.userID << " transaction " << (j + 1) << " starts at " << transactionStartTime << " seconds\n";
+
+                int transactionEndTime = transactionStartTime + user.transactions[j];
+                cout << "User " << user.userID << " transaction " << (j + 1) << " ends at " << transactionEndTime << " seconds\n";
+
+                // Calculate waiting time for this transaction
+                totalWaitingTime += (transactionStartTime - user.startTime);
+                totalTransactions++;
+
+                // Move the current time forward
+                transactionStartTime = transactionEndTime;
+            }
+
+            currentTime = transactionStartTime;
+        }
+
+        // Calculate and print average waiting time
+        double avgWaitingTime = (double) totalWaitingTime / totalTransactions;
+        cout << "\nSimulation complete!\n";
+        cout << "Average Waiting Time: " << avgWaitingTime << " seconds\n";
+    }
+};
+
+// Main function
+int main() {
+    TransactionProcessor processor;
+
+    cout << "Welcome to the Transaction Processing System!\n";
+    cout << "Enter user transactions in the following format:\n";
+    cout << "  userID startTime duration1 duration2 ...\n";
+    cout << "Enter '-1' as the userID to stop input.\n\n";
+
+    while (true) {
+        User user;
+        int userID, startTime, duration;
+
+        cout << "\nEnter User ID (-1 to stop): ";
+        cin >> userID;
+        if (userID == -1) break;  // Stop input if -1 is entered
+
+        cout << "Enter Start Time for User " << userID << ": ";
+        cin >> startTime;
+        user.setUser(userID, startTime);
+
+        cout << "Enter transaction durations for User " << userID << " (end input with a newline): ";
+        while (cin >> duration) {
+            user.addTransaction(duration);
+            if (cin.peek() == '\n') break; // Stop when the line ends
+        }
+
+        // Add user to the processor queue
+        processor.addUser(user);
+    }
+
+    cout << "\nAll inputs received. Starting the simulation...\n";
+    processor.simulateProcessing();
+
+    return 0;
+}

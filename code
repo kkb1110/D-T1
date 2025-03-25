@@ -1,118 +1,87 @@
 #include <iostream>
-#include <cstring>  // For strcpy and strcmp
 
 using namespace std;
 
-#define MAX_CARS 10
-#define LICENSE_PLATE_SIZE 20
+#define MAX_USERS 100
+#define MAX_TRANSACTIONS 100
 
-class Car {
+// User class
+class User {
 public:
-    char license_plate[LICENSE_PLATE_SIZE];
-    int move_count;
+    int userID;
+    int startTime;
+    int numTransactions;
+    int transactions[MAX_TRANSACTIONS];
 
-    Car() : move_count(0) {
-        license_plate[0] = '\0'; // Initialize empty string
-    }
-
-    void setLicensePlate(const char* plate) {
-        strcpy(license_plate, plate);
+    // Constructor to initialize a User
+    User() {
+        userID = 0;
+        startTime = 0;
+        numTransactions = 0;
     }
 };
 
-class ParkingGarage {
-private:
-    Car cars[MAX_CARS];
-    int top;
+// Function to simulate transaction processing
+void simulateProcessing(User users[], int numUsers) {
+    int currentTime = 0;
+    int totalWaitingTime = 0;
+    int totalTransactions = 0;
 
-public:
-    ParkingGarage() : top(-1) {}
+    for (int i = 0; i < numUsers; i++) {
+        User user = users[i];
+        int transactionStartTime = (currentTime < user.startTime) ? user.startTime : currentTime;
 
-    bool isFull() const {
-        return top == MAX_CARS - 1;
-    }
+        for (int j = 0; j < user.numTransactions; j++) {
+            cout << "User " << user.userID << " transaction starts at " << transactionStartTime << endl;
 
-    bool isEmpty() const {
-        return top == -1;
-    }
+            int transactionEndTime = transactionStartTime + user.transactions[j];
+            cout << "User " << user.userID << " transaction ends at " << transactionEndTime << endl;
 
-    void arrive(const char* license_plate) {
-        if (isFull()) {
-            cout << "Car " << license_plate << " arrives but the garage is full. It leaves.\n";
-            return;
-        }
-        top++;
-        cars[top].setLicensePlate(license_plate);
-        cars[top].move_count = 0;
-        cout << "Car " << license_plate << " arrives and is parked.\n";
-    }
+            // Calculate waiting time for this transaction
+            totalWaitingTime += (transactionStartTime - user.startTime);
+            totalTransactions++;
 
-    void depart(const char* license_plate) {
-        if (isEmpty()) {
-            cout << "Car " << license_plate << " cannot depart because the garage is empty.\n";
-            return;
+            // Move the current time forward
+            transactionStartTime = transactionEndTime;
         }
 
-        ParkingGarage tempStack;
-        bool found = false;
-
-        while (!isEmpty()) {
-            Car topCar = cars[top--];
-
-            if (strcmp(topCar.license_plate, license_plate) == 0) {
-                cout << "Car " << license_plate << " departs. It was moved out " << topCar.move_count << " times.\n";
-                found = true;
-                break;
-            }
-
-            topCar.move_count++;
-            tempStack.cars[++tempStack.top] = topCar;
-        }
-
-        while (!tempStack.isEmpty()) {
-            cars[++top] = tempStack.cars[tempStack.top--];
-        }
-
-        if (!found) {
-            cout << "Car " << license_plate << " was not found in the garage.\n";
-        }
+        currentTime = transactionStartTime;
     }
 
-    static void displayInstructions() {
-        cout << "\nWelcome to the Bashemin Parking Garage System!\n"
-             << "Commands:\n"
-             << "  A <license_plate> - Arrive a car\n"
-             << "  D <license_plate> - Depart a car\n"
-             << "  X - Exit the program\n\n";
-    }
-};
+    // Calculate and print average waiting time
+    double avgWaitingTime = (double) totalWaitingTime / totalTransactions;
+    cout << "Average Waiting Time: " << avgWaitingTime << " seconds" << endl;
+}
 
 int main() {
-    ParkingGarage garage;
-    garage.displayInstructions();
+    User users[MAX_USERS];
+    int numUsers = 0;
 
-    char command;
-    char license_plate[LICENSE_PLATE_SIZE];
+    cout << "Enter user transactions (Format: userID startTime durations...)" << endl;
+    cout << "Enter -1 to stop input." << endl;
 
     while (true) {
-        cout << "Enter command: ";
-        cin >> command;
+        int userID, startTime, duration;
+        users[numUsers].numTransactions = 0;
 
-        if (command == 'X' || command == 'x') {
-            cout << "Exiting program. Thank you!\n";
-            break;
+        cin >> userID;
+        if (userID == -1) break;  // Stop input if -1 is entered
+
+        cin >> startTime;
+        users[numUsers].userID = userID;
+        users[numUsers].startTime = startTime;
+
+        // Read transaction durations
+        while (cin >> duration) {
+            users[numUsers].transactions[users[numUsers].numTransactions++] = duration;
+            if (cin.peek() == '\n') break; // Stop when the line ends
         }
 
-        cin >> license_plate;
-
-        if (command == 'A') {
-            garage.arrive(license_plate);
-        } else if (command == 'D') {
-            garage.depart(license_plate);
-        } else {
-            cout << "Invalid command. Please enter A, D, or X.\n";
-        }
+        numUsers++;
     }
+
+    // Process transactions
+    simulateProcessing(users, numUsers);
 
     return 0;
 }

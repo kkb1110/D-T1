@@ -1,29 +1,9 @@
 #include <stdio.h>
 
-#define INF 99999  // Representing infinity
+#define INF 99999
 
-void floydWarshall(int graph[100][100], int n) {
-    int dist[100][100];
-
-    // Initialize distance matrix
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            dist[i][j] = graph[i][j];
-        }
-    }
-
-    // Floyd-Warshall algorithm
-    for (int k = 0; k < n; k++) {
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                if (dist[i][k] + dist[k][j] < dist[i][j])
-                    dist[i][j] = dist[i][k] + dist[k][j];
-            }
-        }
-    }
-
-    // Print the shortest distance matrix
-    printf("\nAll Pairs Shortest Distance Matrix:\n");
+void printMatrix(int dist[100][100], int n, int step) {
+    printf("\nA%d matrix:\n", step);
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             if (dist[i][j] == INF)
@@ -35,6 +15,31 @@ void floydWarshall(int graph[100][100], int n) {
     }
 }
 
+void floydWarshall(int graph[100][100], int n) {
+    int dist[100][100];
+
+    // Initialize distance matrix (A0)
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            dist[i][j] = graph[i][j];
+
+    printMatrix(dist, n, 0); // Print A0
+
+    // Floyd-Warshall algorithm with intermediate table prints
+    for (int k = 0; k < n; k++) {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (dist[i][k] + dist[k][j] < dist[i][j])
+                    dist[i][j] = dist[i][k] + dist[k][j];
+            }
+        }
+        printMatrix(dist, n, k + 1); // Print A1, A2, A3...
+    }
+
+    printf("\nFinal Shortest Distance Matrix (Same as A%d):\n", n);
+    printMatrix(dist, n, n);
+}
+
 int main() {
     int graph[100][100], n;
 
@@ -42,11 +47,9 @@ int main() {
     scanf("%d", &n);
 
     printf("Enter the adjacency matrix (use 99999 for infinity):\n");
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
             scanf("%d", &graph[i][j]);
-        }
-    }
 
     floydWarshall(graph, n);
 
